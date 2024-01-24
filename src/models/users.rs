@@ -8,12 +8,3 @@ pub struct User {
     pub username: String,
     pub secret: String,
 }
-
-
-
-#[derive(Insertable, PartialEq, Debug)]
-#[diesel(table_name = crate::schema::users)]
-pub struct NewUser<'a> {
-    pub username: &'a str,
-    pub secret: &'a str,
-}
