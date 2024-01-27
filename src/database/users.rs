@@ -1,8 +1,8 @@
-use crate::models::users::User;
-use crate::schema::users;
-use diesel::pg::PgConnection;
+use diesel::insert_into;
 use diesel::prelude::*;
+use diesel::pg::PgConnection;
 use serde::Deserialize;
+use crate::models::users::User;
 
 pub enum UserCreationError {
     DuplicatedEmail,
@@ -10,9 +10,9 @@ pub enum UserCreationError {
 }
 
 
-// #[diesel(check_for_backend(diesel::pg::Pg))]
 #[derive(Insertable, Deserialize)]
-#[diesel(table_name = users)]
+#[diesel(table_name = crate::schema::users)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct NewUser<'a> {
     pub username: &'a str,
     pub secret: &'a str,
@@ -22,6 +22,7 @@ pub fn create(
     username: &str,
     secret: &str,
 ) -> Result<User, UserCreationError> {
+
     // let salt = SaltString::generate(&mut OsRng);
     // let hash = Scrypt
     //     .hash_password(password.as_bytes(), &salt)
@@ -34,7 +35,7 @@ pub fn create(
         secret,
     };
 
-    diesel::insert_into(users::table)
+    insert_into(users::table)
         .values(new_user)
         .get_result::<User>(conn)
         .map_err(Into::into)

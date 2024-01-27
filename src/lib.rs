@@ -7,11 +7,11 @@ use rocket::launch;
 use rocket::{Rocket, Build};
 use dotenv::dotenv;
 
-mod config;
-mod database;
-mod models;
-mod routes;
-mod schema;
+pub mod schema;
+pub mod config;
+pub mod database;
+pub mod models;
+pub mod routes;
 
 
 #[launch]
