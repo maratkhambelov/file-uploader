@@ -1,29 +1,21 @@
-use crate::auth::{generate_token};
+use crate::auth::generate_token;
+use crate::config::AppState;
+use crate::database::users::{NewUser, User};
 use crate::database::Db;
 use crate::schema::users;
 use rocket::futures::TryFutureExt;
-use crate::database::users::{NewUser, User};
-use rocket_db_pools::Connection;  
-use rocket_db_pools::diesel::*;
-use serde::Deserialize;
-use scrypt::{
-    password_hash::{
-        rand_core::OsRng,
-        PasswordHash, PasswordHasher, PasswordVerifier, SaltString
-    },
-    Scrypt
-};
-use rocket::serde::json::{ Json};
-use rocket::response::Responder;
-use std::io::Cursor;
 use rocket::http::Status;
-
-const SECRET: &'static str = "8Xui8SN4mI+7egV/9dlfYYLGQJeEx4+DwmSQLwDVXJg=";
-
-
-
-
-
+use rocket::response::Responder;
+use rocket::serde::json::Json;
+use rocket::State;
+use rocket_db_pools::diesel::*;
+use rocket_db_pools::Connection;
+use scrypt::{
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Scrypt,
+};
+use serde::Deserialize;
+use std::io::Cursor;
 
 #[derive(Deserialize)]
 struct RegistrationCredentials {
@@ -32,25 +24,27 @@ struct RegistrationCredentials {
 }
 
 #[post("/registration", format = "json", data = "<credentials>")]
-pub async fn registration(credentials: Json<RegistrationCredentials>, mut db: Connection<Db> )  {
-    
+pub async fn registration(credentials: Json<RegistrationCredentials>, mut db: Connection<Db>) {
     let credentials_data = credentials.into_inner();
-    
+
     let salt = SaltString::generate(&mut OsRng);
     let hash = Scrypt
         .hash_password(credentials_data.password.as_bytes(), &salt)
         .expect("hash error")
         .to_string()
         .to_owned();
-        
-    let new_user: NewUser<'_> = NewUser { username: &credentials_data.username, secret: &hash };
 
+    let new_user: NewUser<'_> = NewUser {
+        username: &credentials_data.username,
+        secret: &hash,
+    };
 
-    diesel::insert_into(users::table).values(&new_user).execute(&mut db).await.expect("Failed to insert new user");
-
+    diesel::insert_into(users::table)
+        .values(&new_user)
+        .execute(&mut db)
+        .await
+        .expect("Failed to insert new user");
 }
-
-
 
 #[derive(Deserialize, Clone)]
 struct LoginUserData {
@@ -60,35 +54,35 @@ struct LoginUserData {
 
 impl<'r> Responder<'r, 'static> for User {
     fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
-        let user_json = serde_json::to_string(&self).map_err(|_| {
-            rocket::http::Status::InternalServerError
-        })?;
+        let user_json = serde_json::to_string(&self).map_err(|_| Status::InternalServerError)?;
         Ok(rocket::response::Response::build()
             .header(rocket::http::ContentType::JSON)
-            .status(rocket::http::Status::Ok)
+            .status(Status::Ok)
             .sized_body(user_json.len(), Cursor::new(user_json))
             .finalize())
     }
 }
 
-
-
 #[post("/login", format = "json", data = "<credentials>")]
-pub async fn login(credentials: Json<LoginUserData>, mut db: Connection<Db>) -> Option<String>{
-    
+pub async fn login(
+    credentials: Json<LoginUserData>,
+    mut db: Connection<Db>,
+    state: &State<AppState>,
+) -> Option<String> {
     let username = credentials.username.clone();
     let password = credentials.password.clone();
-    
+
     let user: Option<User> = match users::table
         .filter(users::username.eq(&username))
         .get_result::<User>(&mut db)
         .map_err(|err| {
             eprintln!("Error getting user: {}", err);
         })
-        .await {
-            Ok(user) => Some(user),
-            Err(_) => None,
-        };
+        .await
+    {
+        Ok(user) => Some(user),
+        Err(_) => None,
+    };
 
     let user = match user {
         Some(user) => user,
@@ -101,8 +95,10 @@ pub async fn login(credentials: Json<LoginUserData>, mut db: Connection<Db>) -> 
         .map_err(|err| eprintln!("login_user: scrypt_check: {}", err))
         .is_ok();
 
+    let secret = state.secret.clone();
+
     if password_matches {
-        Some(generate_token(&user.id, &user.username, SECRET.to_string().as_bytes()))
+        Some(generate_token(&user.id, &user.username, &secret))
     } else {
         eprintln!(
             "login attempt for '{}' failed: password doesn't match",
@@ -111,8 +107,3 @@ pub async fn login(credentials: Json<LoginUserData>, mut db: Connection<Db>) -> 
         None
     }
 }
-
-
-
-
-

@@ -31,8 +31,6 @@ pub enum UserCreationError {
     DuplicatedUsername,
 }
 
-
-
 pub fn create(conn: &mut PgConnection, username: &str, secret: &str) -> Result<User, Error> {
     let new_user = &NewUser { username, secret };
 

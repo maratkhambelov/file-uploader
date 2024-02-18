@@ -9,7 +9,7 @@ pub struct FileResult {
     pub result: String,
 }
 
-#[derive(Queryable, Selectable, Deserialize, Serialize, Debug, PartialEq)] 
+#[derive(Queryable, Selectable, Deserialize, Serialize, Debug, PartialEq)]
 #[diesel(table_name = crate::schema::file_results)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 

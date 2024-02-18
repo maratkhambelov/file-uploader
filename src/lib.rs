@@ -3,24 +3,23 @@ extern crate rocket;
 extern crate diesel;
 
 use database::Db;
-use rocket::launch;
-use rocket::{Rocket, Build};
 use dotenv::dotenv;
+use rocket::launch;
+use rocket::{Build, Rocket};
 use rocket_db_pools::Database;
 
-
 pub mod auth;
-pub mod schema;
 pub mod config;
 pub mod database;
 pub mod routes;
+pub mod schema;
 
 #[launch]
 pub fn rocket() -> Rocket<Build> {
     dotenv().ok();
     rocket::custom(config::from_env())
-    .attach(Db::init())        
-    .mount(
+        .attach(Db::init())
+        .mount(
             "/api/",
             routes![
                 routes::auth::registration,
@@ -29,8 +28,8 @@ pub fn rocket() -> Rocket<Build> {
                 routes::users::get_account_info,
                 routes::file::upload,
                 routes::file::file_result
-            ]
+            ],
         )
-    .register("/", catchers![routes::not_found])        
-    .attach(config::AppState::manage())
+        .register("/", catchers![routes::not_found])
+        .attach(config::AppState::manage())
 }

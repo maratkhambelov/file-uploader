@@ -1,33 +1,30 @@
-// use crate::config::{self, AppState};
-use uuid::Uuid;
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, TokenData};
+use crate::config::{self, AppState};
+use chrono::{Duration, Utc};
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header};
 use rocket::http::Status;
 use rocket::outcome::Outcome;
 use rocket::request::{self, FromRequest, Request};
 use serde::{Deserialize, Serialize};
-use chrono::{Duration, Utc};
+use uuid::Uuid;
 
-
-const SECRET: &'static str = "8Xui8SN4mI+7egV/9dlfYYLGQJeEx4+DwmSQLwDVXJg=";
 const TOKEN_PREFIX: &'static str = "Token ";
-
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GuardedRequest {
     pub user_id: Uuid,
 }
 
-
-
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for GuardedRequest {
     type Error = ();
 
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        // let state = req.rocket().state::<AppState>().unwrap();
-        
-        if let Some(user_data) = extract_auth_from_request(req, SECRET.to_string().as_bytes()) {
-            Outcome::Success(Self { user_id: user_data.id })
+        let state = req.rocket().state::<AppState>().unwrap();
+
+        if let Some(user_data) = extract_auth_from_request(req, &state.secret) {
+            Outcome::Success(Self {
+                user_id: user_data.id,
+            })
         } else {
             eprintln!("Not Authorized");
             Outcome::Error((Status::Forbidden, ()))
@@ -35,17 +32,14 @@ impl<'r> FromRequest<'r> for GuardedRequest {
     }
 }
 fn extract_auth_from_request(request: &Request, secret: &[u8]) -> Option<DecodedToken> {
-    let authorization_header: Option<&str> =      request
-    .headers()
-    .get_one("authorization");
+    let authorization_header: Option<&str> = request.headers().get_one("authorization");
 
     println!("{}", authorization_header.unwrap_or_default());
 
-    authorization_header.and_then(extract_token_from_header)
+    authorization_header
+        .and_then(extract_token_from_header)
         .and_then(|token| decode_token(token, secret))
 }
-
-
 
 #[derive(Debug, Deserialize, Serialize)]
 struct DecodedToken {
@@ -63,7 +57,6 @@ fn extract_token_from_header(header: &str) -> Option<&str> {
         None
     }
 }
-
 
 pub fn generate_token(uuid: &Uuid, username: &str, secret: &[u8]) -> String {
     let exp = Utc::now() + Duration::days(60); // TODO: move to config

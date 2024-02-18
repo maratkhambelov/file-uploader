@@ -13,7 +13,6 @@ pub struct AppState {
 impl AppState {
     pub fn manage() -> AdHoc {
         AdHoc::on_ignite("Manage config", |rocket| async move {
-            // Rocket doesn't expose it's own secret_key, so we use our own here.
             let secret = env::var("SECRET_KEY").unwrap_or_else(|err| {
                 if cfg!(debug_assertions) {
                     SECRET.to_string()
@@ -29,10 +28,8 @@ impl AppState {
     }
 }
 
-
 pub fn from_env() -> Figment {
-    let address = env::var("ADDRESS")
-        .unwrap_or_else(|_| "127.0.0.1".to_string());
+    let address = env::var("ADDRESS").unwrap_or_else(|_| "127.0.0.1".to_string());
 
     let port = env::var("PORT")
         .unwrap_or_else(|_| "8000".to_string())
@@ -51,4 +48,3 @@ pub fn from_env() -> Figment {
         .merge(("address", address))
         .merge(("databases", databases))
 }
-

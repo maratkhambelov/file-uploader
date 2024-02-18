@@ -1,4 +1,3 @@
-
 pub mod auth;
 pub mod file;
 pub mod users;
@@ -7,4 +6,3 @@ pub mod users;
 pub fn not_found() -> &'static str {
     "Route was not found!"
 }
-
