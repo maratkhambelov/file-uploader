@@ -1,25 +1,24 @@
-use diesel::prelude::*;
-use diesel::pg::PgConnection;
-use diesel::result::Error;
-use serde::Deserialize;
-use crate::models::users::User;
 use crate::schema::users::{self, table};
-use scrypt::{
-    password_hash::{
-        rand_core::OsRng,
-        PasswordHash, PasswordHasher, PasswordVerifier, SaltString
-    },
-    Scrypt
-};
-use crate::database::Db;
-use rocket_db_pools::Connection;  
+use diesel::pg::PgConnection;
+use diesel::prelude::*;
+use diesel::result::Error;
 use rocket_db_pools::diesel::*;
+use rocket_db_pools::Connection;
+use scrypt::{
+    password_hash::{PasswordHash, PasswordVerifier},
+    Scrypt,
+};
 
-pub enum UserCreationError {
-    DuplicatedEmail,
-    DuplicatedUsername,
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+#[derive(Queryable, Selectable, Deserialize, Serialize, Debug, PartialEq)] //be careful with Deserialize, Serialize
+#[diesel(table_name = crate::schema::users)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct User {
+    pub id: Uuid,
+    pub username: String,
+    pub secret: String,
 }
-
 #[derive(Insertable, Deserialize, Debug)]
 #[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -27,31 +26,22 @@ pub struct NewUser<'a> {
     pub username: &'a str,
     pub secret: &'a str,
 }
+pub enum UserCreationError {
+    DuplicatedEmail,
+    DuplicatedUsername,
+}
 
 
 
-pub fn create(
-    conn: &mut PgConnection,
-    username: &str,
-    secret: &str,
-) -> Result<User, Error> { 
-
-
-    let new_user = &NewUser {
-        username,
-        secret,
-    };
+pub fn create(conn: &mut PgConnection, username: &str, secret: &str) -> Result<User, Error> {
+    let new_user = &NewUser { username, secret };
 
     diesel::insert_into(users::table)
         .values(new_user)
         .get_result::<User>(conn)
 }
 
-
-
-
-
-pub fn login(username: &str, password: &str, conn: &mut PgConnection) -> Option<User> { // 
+pub fn login(username: &str, password: &str, conn: &mut PgConnection) -> Option<User> {
     let user = users::table
         .filter(users::username.eq(username))
         .get_result::<User>(conn)
@@ -74,4 +64,3 @@ pub fn login(username: &str, password: &str, conn: &mut PgConnection) -> Option<
         None
     }
 }
-

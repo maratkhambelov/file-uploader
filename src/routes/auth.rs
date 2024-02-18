@@ -1,9 +1,8 @@
-use crate::auth::{generate_token, GuardedRequest};
+use crate::auth::{generate_token};
 use crate::database::Db;
-use crate::models::users::User;
 use crate::schema::users;
 use rocket::futures::TryFutureExt;
-use crate::database::users::NewUser;
+use crate::database::users::{NewUser, User};
 use rocket_db_pools::Connection;  
 use rocket_db_pools::diesel::*;
 use serde::Deserialize;

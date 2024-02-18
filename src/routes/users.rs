@@ -1,11 +1,10 @@
-use crate::auth::{ GuardedRequest };
-use crate::database::Db;
-use crate::models::users::User;
+use crate::auth::GuardedRequest;
+use crate::database::{Db, users::User};
 use crate::schema::users;
 use rocket_db_pools::Connection;  
 use rocket_db_pools::diesel::*;
 
-use rocket::serde::json::{ Json};
+use rocket::serde::json::Json;
 use rocket::http::Status;
 
 

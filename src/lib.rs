@@ -13,7 +13,6 @@ pub mod auth;
 pub mod schema;
 pub mod config;
 pub mod database;
-pub mod models;
 pub mod routes;
 
 #[launch]
