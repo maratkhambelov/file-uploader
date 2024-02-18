@@ -1,14 +1,10 @@
 
 pub mod auth;
 pub mod file;
+pub mod users;
 
 #[catch(404)]
 pub fn not_found() -> &'static str {
-    "Resource was not found!"
+    "Route was not found!"
 }
 
-
-#[get("/hello")]
-pub fn hello() -> &'static str {
-    "Hello, world!"
-}

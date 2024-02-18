@@ -4,7 +4,6 @@ use rocket::figment::Figment;
 use std::collections::HashMap;
 use std::env;
 
-/// Debug only secret for JWT encoding & decoding.
 const SECRET: &'static str = "8Xui8SN4mI+7egV/9dlfYYLGQJeEx4+DwmSQLwDVXJg=";
 
 pub struct AppState {
