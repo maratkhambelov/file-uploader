@@ -1,5 +1,6 @@
 
 pub mod auth;
+pub mod file;
 
 #[catch(404)]
 pub fn not_found() -> &'static str {

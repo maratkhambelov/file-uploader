@@ -29,18 +29,7 @@ const SECRET: &'static str = "8Xui8SN4mI+7egV/9dlfYYLGQJeEx4+DwmSQLwDVXJg=";
 
 
 
-/**
-* TODO:
-* DONE 1) создать пользователя DONE
-* DONE 2) - запустить route
-* DONE 3) создать хеш при регистрации, занести в БД
-* 4) при логине сравнивать хеш
-* 5)  создавать токен при логине
-6) возвращать токен при логине
-7) в защищенном гварде проверять токен
-8) создать CRUD по users
-8) перенести в модуль логику по регистрации в database
-*/
+
 
 #[derive(Deserialize)]
 struct RegistrationCredentials {
@@ -67,10 +56,23 @@ pub async fn registration(credentials: Json<RegistrationCredentials>, mut db: Co
 
 }
 
-// #[derive(Deserialize)]
-// pub struct LoginUser {
-//     user: LoginUserData,
+
+//TODO: post?
+// #[post("/logout", format = "json", data = "<credentials>")]
+// pub async fn logout(credentials: Json<RegistrationCredentials>, mut db: Connection<Db> )  {
+    
+//     let credentials_data = credentials.into_inner();
+//     let salt = SaltString::generate(&mut OsRng);
+//     let hash = Scrypt
+//         .hash_password(credentials_data.password.as_bytes(), &salt)
+//         .expect("hash error")
+//         .to_string()
+//         .to_owned();
+//     let new_user: NewUser<'_> = NewUser { username: &credentials_data.username, secret: &hash };
+//     diesel::insert_into(users::table).values(&new_user).execute(&mut db).await.expect("Failed to insert new user");
 // }
+
+
 
 #[derive(Deserialize, Clone)]
 struct LoginUserData {
@@ -102,9 +104,11 @@ DONE тправить в запрос токен
 DONE обработать этот запрос с токеном
 DONE возвращать или ошибку или выполнять запрос
 
-2) создать CRUD по пользователю
-3) создать запрос по загрузке файла
-4) создать запрос получения результата
+3) DONE создать запрос по загрузке файла
+4) DONE создать запрос получения результата
+5) logout
+
+ 
 
 */
 //DONE - возвращать токен
@@ -116,7 +120,7 @@ pub async fn login(credentials: Json<LoginUserData>, mut db: Connection<Db>) -> 
     let username = credentials.username.clone();
     let password = credentials.password.clone();
     
-    let user = match users::table
+    let user: Option<User> = match users::table
         .filter(users::username.eq(&username))
         .get_result::<User>(&mut db)
         .map_err(|err| {

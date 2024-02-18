@@ -34,7 +34,9 @@ pub fn rocket() -> Rocket<Build> {
                 routes::auth::registration,
                 routes::auth::get_users,
                 routes::auth::login,
-                routes::auth::get_account_info
+                routes::auth::get_account_info,
+                routes::file::upload,
+                routes::file::file_result
             ]
         )
     .register("/", catchers![routes::not_found])        

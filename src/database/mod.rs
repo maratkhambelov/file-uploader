@@ -6,3 +6,5 @@ use rocket_db_pools::diesel::PgPool;
 pub struct Db(PgPool);
 
 pub mod users;
+
+pub mod file_results;
